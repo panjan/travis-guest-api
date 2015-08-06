@@ -30,7 +30,7 @@ module Travis::GuestApi
         status 204
       end
 
-      post '/jobs/:job_id/logs', '/logs' do
+      post '/logs' do
         payload = JSON.parse(request.body.read).slice('job_id', 'message')
         halt 422, { error: 'Wrong job_id!' }.to_json if params['job_id'] and (@job_id != params['job_id'].to_i)
         halt 422, { error: 'Key message and number must be passed'}.to_json unless payload['message']
@@ -38,16 +38,15 @@ module Travis::GuestApi
         { success: true }.to_json
       end
 
-      post '/jobs/:job_id/finished', '/finished' do
+      post '/finished' do
         payload = JSON.parse(request.body.read).slice('job_id', 'message')
         halt 422, { error: 'Wrong job_id!' }.to_json if params['job_id'] and (@job_id != params['job_id'].to_i)
         @msg_handler.call(event: 'finished')
         { success: true }.to_json
       end
 
-
       #calls TestStepResult.write_result through amqp
-      post '/jobs/:job_id/testcases', '/testcases' do
+      post '/testcases' do
         payload = JSON.parse(request.body.read)
         halt 422, { error: 'Wrong job_id!' }.to_json if params['job_id'] and (@job_id != params['job_id'].to_i)
         halt 422, { error: 'Keys name, classname, result are mandator!' }.to_json unless
@@ -55,7 +54,7 @@ module Travis::GuestApi
         @reporter.send_tresult(@job_id, payload.slice('name', 'classname', 'result', 'duration', 'test_data'))
       end
 
-      put  '/jobs/:job_id/testcases/:testcase_id', 'testcases/:id' do
+      put 'testcases/:id' do
         payload = JSON.parse(request.body.read)
         halt 422, { error: 'Wrong job_id!' }.to_json if params['job_id'] and (@job_id != params['job_id'].to_i)
         halt 422, { error: 'Keys name, classname are mandator!' }.to_json unless
