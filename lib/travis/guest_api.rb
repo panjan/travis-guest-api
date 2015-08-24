@@ -7,6 +7,10 @@ module Travis
       def config
         @config ||= defined?(Travis::Worker) ? Travis::Worker.config : Config.new
       end
+
+      def setup
+        @cache ||= Cache.new
+      end
     end
 
   end
