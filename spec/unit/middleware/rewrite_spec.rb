@@ -73,4 +73,34 @@ describe Travis::GuestApi::App::Middleware::Rewrite do
     end
   end
 
+  describe 'POST /machines/steps' do
+    
+    it 'returns 422 if machine id not specified' do
+      request = { stepStack: ['test_case_is_second_last','test_step_is_last'] }
+
+      post '/api/v1/machines/steps',
+      request.to_json,
+      { "CONTENT_TYPE" => "application/json" }
+      
+      expect(last_response.status).to eq(422)
+    end
+
+    it 'rewrites steps route' do
+      request = { 
+        stepStack: ['test_case_is_second_last','test_step_is_last'],
+        result: 'a big success',
+        classname: 'test_class' # classname = testcase
+      }
+
+      expect(reporter).to receive(:send_tresult)
+
+      post '/api/v1/machines/steps',
+        request,
+        'x-MachineId' => job_id
+      
+      expect(last_response.status).to eq(200)
+      expect(last_request.params['name']).not_to be_empty
+      expect(last_request.params['name']).to eq(request[:stepStack].last)
+    end
+  end
 end

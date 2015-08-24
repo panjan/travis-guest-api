@@ -28,6 +28,10 @@ class Travis::GuestApi::App::Middleware
       before '/machines/networks' do
         rewrite_networks_v1
       end
+
+      before '/machines/steps' do
+        rewrite_steps_v1
+      end
     end
 
     def rewrite_job_id_part(job_id)
@@ -42,12 +46,16 @@ class Travis::GuestApi::App::Middleware
       env['job_id'] = job_id
     end
 
-    def rewrite_logs_v1
-      env['PATH_INFO'] = "#{V2_PREFIX}/logs"
+    def rewrite_x_machine_id_v1
       unless env['x-MachineId']
         halt 422, { error: 'x-MachineId must be specified in form data. '}.to_json
       end
       request.update_param 'job_id', env.delete('x-MachineId')
+    end
+
+    def rewrite_logs_v1
+      env['PATH_INFO'] = "#{V2_PREFIX}/logs"
+      rewrite_x_machine_id_v1()
       request.update_param 'message', request.delete_param('messageText')
     end
 
@@ -57,6 +65,20 @@ class Travis::GuestApi::App::Middleware
 
     def rewrite_networks_v1
       env['PATH_INFO'] = "#{V2_PREFIX}/networks"
+    end
+
+    def rewrite_steps_v1
+      env['PATH_INFO'] = "#{V2_PREFIX}/steps"
+      rewrite_x_machine_id_v1()
+      puts 'asdasdasdasdasdasdas'
+      p params['stepStack'].kind_of?(Array)
+      if params['stepStack'].nil? or params['stepStack'].last.nil?
+        halt 422, 
+        { error: 'StepStack must be an array containing step name as last element.' }.to_json 
+      end
+
+      request.update_param 'name', params[:stepStack].last
+      request.delete_param(:stepStack)
     end
 
   end
